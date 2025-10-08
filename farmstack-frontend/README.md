@@ -1,7 +1,10 @@
 # FarmStack React App
 
 ![Image Alt Text](https://farmstack.co/wp-content/uploads/2021/07/FarmStack-logo.png)
+
 Welcome to FarmStack React App! This open-source project allows you to build a powerful web application for managing farm/farmer data. This readme file will guide you through the process of setting up the app and configuring the necessary environment variables. Let's get started!
+
+> **Quick Start**: For a streamlined setup process, check out the [Quick Start Guide](./QUICKSTART.md)
 
 ## Prerequisites
 
