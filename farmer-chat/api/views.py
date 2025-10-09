@@ -7,7 +7,6 @@ from api.utils import (
     handle_input_query,
     process_input_audio_to_base64,
     process_output_audio,
-    process_query,  # <-- update this to use healthcare symptom analysis/remedy retrieval
     process_transcriptions,
 )
 from common.constants import Constants
@@ -20,6 +19,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+
+# Import ServviaSymptomAnalyzer
+from intent_classification.symptom_classifier import ServviaSymptomAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +53,9 @@ class ChatAPIViewSet(GenericViewSet):
         response_data = Response(
             {"message": None, "query": original_query, "error": False}
         )
-        response_map = {}
-        authenticated_user = None
 
         try:
-            # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
-
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
@@ -68,18 +66,22 @@ class ChatAPIViewSet(GenericViewSet):
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
 
-            # This function should now analyze symptoms and return remedies/advice
-            response_map = process_query(original_query, email_id, authenticated_user)  # <-- Healthcare logic here
+            # Call ServviaSymptomAnalyzer to analyze symptoms
+            analyzer = ServviaSymptomAnalyzer()  # API key via env var
+            analysis_result = analyzer.analyze_symptoms(original_query)
+            result_dict = analysis_result.to_dict()
 
-            response_data.data["message"] = (
-                "Successful retrieval of response for the symptom query"
-            )
-            response_data.data["message_id"] = response_map.get("message_id")
-            response_data.data["response"] = response_map.get("translated_response")
-            response_data.data["source"] = response_map.get("source", None)
-            response_data.data["follow_up_questions"] = response_map.get(
-                "follow_up_questions"
-            )
+            response_data.data.update({
+                "message": "Successful retrieval of response for the symptom query",
+                "condition": result_dict["condition"],
+                "severity": result_dict["severity"],
+                "confidence": result_dict["confidence"],
+                "analysis": result_dict["analysis"],
+                "remedies": result_dict["remedies"],
+                "when_to_see_doctor": result_dict["when_to_see_doctor"],
+                "precautions": result_dict["precautions"],
+                "disclaimer": result_dict["disclaimer"],
+            })
 
         except Exception as error:
             logger.error(error, exc_info=True)
@@ -311,6 +313,30 @@ class ChatAPIViewSet(GenericViewSet):
                         ),
                         "response": get_answer_for_text_query_response_data.get(
                             "response", None
+                        ),
+                        "condition": get_answer_for_text_query_response_data.get(
+                            "condition", None
+                        ),
+                        "severity": get_answer_for_text_query_response_data.get(
+                            "severity", None
+                        ),
+                        "confidence_level": get_answer_for_text_query_response_data.get(
+                            "confidence", None
+                        ),
+                        "analysis": get_answer_for_text_query_response_data.get(
+                            "analysis", None
+                        ),
+                        "remedies": get_answer_for_text_query_response_data.get(
+                            "remedies", None
+                        ),
+                        "when_to_see_doctor": get_answer_for_text_query_response_data.get(
+                            "when_to_see_doctor", None
+                        ),
+                        "precautions": get_answer_for_text_query_response_data.get(
+                            "precautions", None
+                        ),
+                        "disclaimer": get_answer_for_text_query_response_data.get(
+                            "disclaimer", None
                         ),
                         "follow_up_questions": get_answer_for_text_query_response_data.get(
                             "follow_up_questions", None
