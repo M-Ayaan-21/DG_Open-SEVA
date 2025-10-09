@@ -7,7 +7,7 @@ from api.utils import (
     handle_input_query,
     process_input_audio_to_base64,
     process_output_audio,
-    process_query,
+    process_query,  # <-- update this to use healthcare symptom analysis/remedy retrieval
     process_transcriptions,
 )
 from common.constants import Constants
@@ -23,22 +23,20 @@ from rest_framework.viewsets import GenericViewSet
 
 logger = logging.getLogger(__name__)
 
-
 class ChatAPIViewSet(GenericViewSet):
     """
-    Custom ViewSet chat services
+    Custom ViewSet chat services for Servvia Healthcare
 
     Actions (operations)
     --------------------
         Get Answer for Text Query :
-            generate answer for a given user text query in text
+            Analyze healthcare symptoms and generate remedy/advice
         Synthesise Audio :
-            generate audio in base64 format for a given text using Text-to-Speech
+            Text-to-Speech for medical advice
         Transcribe Audio :
-            generate transcriptions or text for given voice query using Speech-to-Text
+            Speech-to-Text for voice symptom queries
         Get Answer by Voice Query :
-            generate answer for a given user voice query in voice
-
+            Full voice query input → healthcare advice in voice
     """
 
     authentication_classes = []
@@ -46,7 +44,7 @@ class ChatAPIViewSet(GenericViewSet):
     @action(detail=False, methods=["post"])
     def get_answer_for_text_query(self, request):
         """
-        Generate answer for a given user query
+        Generate healthcare advice/remedy for a given user symptom query
         """
         email_id = request.data.get("email_id")
         original_query = request.data.get("query")
@@ -60,23 +58,21 @@ class ChatAPIViewSet(GenericViewSet):
             # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
 
-            # if is_authenticated == False:
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             if not original_query:
-                response_data.data["message"] = "Please submit a query."
+                response_data.data["message"] = "Please submit a symptom query."
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
 
-            response_map = process_query(original_query, email_id, authenticated_user)
+            # This function should now analyze symptoms and return remedies/advice
+            response_map = process_query(original_query, email_id, authenticated_user)  # <-- Healthcare logic here
 
-            # update actual response body
             response_data.data["message"] = (
-                "Successful retrieval of response for above query"
+                "Successful retrieval of response for the symptom query"
             )
             response_data.data["message_id"] = response_map.get("message_id")
             response_data.data["response"] = response_map.get("translated_response")
@@ -90,16 +86,14 @@ class ChatAPIViewSet(GenericViewSet):
             response_data.data.update(
                 {"message": "Something went wrong", "error": True}
             )
-            response_data.status_code = status_code = (
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            response_data.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
         return response_data
 
     @action(detail=False, methods=["post"])
     def synthesise_audio(self, request):
         """
-        Generate audio in base64 format using Text-to-speech for a given text
+        Text-to-speech for healthcare advice
         """
         email_id = request.data.get("email_id")
         original_text = request.data.get("text")
@@ -107,35 +101,27 @@ class ChatAPIViewSet(GenericViewSet):
         response_data = Response({"message": None, "error": False, "audio": None})
 
         try:
-            # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
-
-            # if is_authenticated == False:
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             if not original_text:
-                response_data.data["message"] = (
-                    "Please submit text for audio synthesis."
-                )
+                response_data.data["message"] = "Please submit text for audio synthesis."
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
 
             response_audio = process_output_audio(original_text, message_id)
-
             if not response_audio:
                 response_data.data.update(
                     {
-                        "message": "Invalid base64 string or unable to generate transcriptions currently.",
-                        "audio": input_audio_base64,
+                        "message": "Invalid base64 string or unable to generate audio.",
+                        "audio": None,
                     }
                 )
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             response_data.data.update(
                 {
@@ -157,7 +143,7 @@ class ChatAPIViewSet(GenericViewSet):
     @action(detail=False, methods=["post"])
     def transcribe_audio(self, request):
         """
-        Generate transcriptions or text for given voice query using Speech-to-Text
+        Speech-to-text for healthcare symptom voice queries
         """
         email_id = request.data.get("email_id", None)
         original_query = request.data.get("query", None)
@@ -177,19 +163,15 @@ class ChatAPIViewSet(GenericViewSet):
         authenticated_user, input_query_file = None, None
 
         try:
-            # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
-
-            # if is_authenticated == False:
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             if not original_query:
                 response_data.data["message"] = (
-                    "Please share a valid base64 string as a query."
+                    "Please share a valid base64 audio string as a query."
                 )
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
@@ -205,12 +187,10 @@ class ChatAPIViewSet(GenericViewSet):
                 input_query = base64.b64encode(bytes(file_content))
 
             input_query_file = handle_input_query(input_query)
-
             if not input_query_file:
                 response_data.data["message"] = "Invalid file or base64 string."
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             response_map = process_transcriptions(
                 input_query_file,
@@ -250,14 +230,13 @@ class ChatAPIViewSet(GenericViewSet):
                 {"message": "Something went wrong", "error": True}
             )
             response_data.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            # return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return response_data
 
     @action(detail=False, methods=["post"])
     def get_answer_by_voice_query(self, request):
         """
-        Generate answer for a given user voice query in voice
+        Full voice query input → healthcare advice in voice
         """
         email_id = request.data.get("email_id", None)
         query = request.data.get("query", None)
@@ -284,16 +263,13 @@ class ChatAPIViewSet(GenericViewSet):
             confidence_score = transcribe_response_data.get("confidence_score", None)
             response_data.data = transcribe_response_data
 
-            # if is_authenticated == False:
             if transcribe_response.status_code == 401:
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             if transcribe_response.status_code == 400:
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             if transcribe_response.status_code == 500:
                 response_data.data.update(
@@ -301,7 +277,6 @@ class ChatAPIViewSet(GenericViewSet):
                 )
                 response_data.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             if (
                 confidence_score
@@ -349,10 +324,8 @@ class ChatAPIViewSet(GenericViewSet):
                 {"message": "Something went wrong", "error": True}
             )
             response_data.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            # response_data.update({"message": "Something went wrong", "error": True}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return response_data
-
 
 class LanguageViewSet(GenericViewSet):
     """
@@ -378,15 +351,11 @@ class LanguageViewSet(GenericViewSet):
         response_data = Response({"message": None, "error": False, "language_data": []})
 
         try:
-            # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
-
-            # if is_authenticated == False:
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             language_list = get_all_languages()
             if len(language_list) >= 1:
@@ -417,27 +386,21 @@ class LanguageViewSet(GenericViewSet):
         saved_user_preferred_language = None
 
         try:
-            # check for authenticated user using email
             authenticated_user = authenticate_user_based_on_email(email_id)
-
-            # if is_authenticated == False:
             if not authenticated_user:
                 response_data.data["message"] = "Invalid Email ID"
                 response_data.status_code = status.HTTP_401_UNAUTHORIZED
                 return response_data
-                # return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
             if not language_id:
                 response_data.data["message"] = "Language ID not submitted"
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             user = get_user_by_email(email_id)
             user_id = user.get("user_id")
             language_id = int(language_id)
 
-            # verify language with language_id exists
             language_dict = get_language_by_id(language_id)
 
             if len(language_dict) >= 1 and language_dict["language_id"] == language_id:
@@ -450,7 +413,6 @@ class LanguageViewSet(GenericViewSet):
                 )
                 response_data.status_code = status.HTTP_400_BAD_REQUEST
                 return response_data
-                # return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             if saved_user_preferred_language:
                 response_data.data.update(
