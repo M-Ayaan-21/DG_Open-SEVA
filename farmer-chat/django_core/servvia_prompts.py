@@ -8,7 +8,7 @@ disclaimers and structured output.
 
 # Healthcare-safe, RAG-first generation prompt with structured output
 RESPONSE_GEN_PROMPT = """
-You are a helpful healthcare information assistant. Your role is to provide general health information based on the context provided, while being clear about limitations and when to seek professional medical care.
+You are a helpful healthcare information assistant. Your role is to provide general health information to {name_1} based on the context provided, while being clear about limitations and when to seek professional medical care.
 
 Context from knowledge base:
 {context}
