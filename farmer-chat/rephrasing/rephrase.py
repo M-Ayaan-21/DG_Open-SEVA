@@ -4,6 +4,13 @@ import asyncio
 from django_core.config import Config
 from rag_service.openai_service import make_openai_request
 
+# Try to import Servvia prompts, fallback to Config if not available
+try:
+    from django_core.servvia_prompts import CONDENSE_QUERY_PROMPT as SERVVIA_CONDENSE_QUERY_PROMPT
+    DEFAULT_CONDENSE_PROMPT = SERVVIA_CONDENSE_QUERY_PROMPT
+except ImportError:
+    DEFAULT_CONDENSE_PROMPT = Config.REPHRASE_QUESTION_PROMPT
+
 
 async def condense_query_prompt(original_query, chat_history):
     """
@@ -24,7 +31,7 @@ async def condense_query_prompt(original_query, chat_history):
 
     """
 
-    condense_prompt = Config.REPHRASE_QUESTION_PROMPT.format(
+    condense_prompt = DEFAULT_CONDENSE_PROMPT.format(
         chat_history=chat_history,
         question=original_query,
     )

@@ -2,12 +2,19 @@ from django_core.config import Config
 from rag_service.openai_service import make_openai_request
 from intent_classification.constants import IntentConstants
 
+# Try to import Servvia prompts, fallback to Config if not available
+try:
+    from django_core.servvia_prompts import INTENT_CLASSIFICATION_PROMPT_TEMPLATE as SERVVIA_INTENT_PROMPT
+    DEFAULT_INTENT_PROMPT = SERVVIA_INTENT_PROMPT
+except ImportError:
+    DEFAULT_INTENT_PROMPT = Config.INTENT_CLASSIFICATION_PROMPT_TEMPLATE
+
 
 async def classify_intent(qn):
     """
     Classify the query or question intent into any of the classification to which it falls under.
     """
-    prompt = Config.INTENT_CLASSIFICATION_PROMPT_TEMPLATE.format(input=qn)
+    prompt = DEFAULT_INTENT_PROMPT.format(input=qn)
     intent_response, ex, retries = await make_openai_request(prompt, model=Config.GPT_4_MODEL)
     return intent_response.choices[0].message.content if intent_response else IntentConstants.USER_INTENT_FARMING
 
