@@ -1,7 +1,0 @@
-django>=4.0
-djangorestframework
-kafka-python
-numpy
-torch
-faiss-cpu
-sentence-transformers
