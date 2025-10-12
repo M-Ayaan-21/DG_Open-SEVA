@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta
       name="description"
-      content="Join our Dark Theme Chat App, a modern and responsive messaging platform that mimics a chatbot-like interaction. Engage in conversations with a smart AI, and enjoy a sleek, user-friendly design optimized for all devices."
+      content="ServVIA - Your AI-powered healthcare platform providing personalized health recommendations, home remedies, and medical guidance through advanced analytics."
     />
     <meta
       name="keywords"
-      content="Dark Theme Chat App, Responsive Chat Application, Modern Messaging Platform, AI Chatbot, User-Friendly Chat Interface"
+      content="AI Healthcare, Medical Assistant, Home Remedies, Health Analytics, Telemedicine, Health Monitoring, Medical Guidance"
     />
     <meta name="author" content="YourName or YourCompanyName" />
     <meta property="og:title" content="Dark Theme Chat App" />
@@ -76,7 +76,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
 
-    <title>Farmer Chat App</title>
+    <title>ServVIA - AI Healthcare Assistant</title>
     <link href="https://cdn.tailwindcss.com" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -194,7 +194,7 @@
     <div class="flex flex-col w-64 h-screen px-4 py-8 bg-[#2d3748] shadow-md">
       <div class="flex flex-col items-center mt-4 -mx-4">
         <a href="">
-          <h2 class="mx-auto font-bold text-xl text-white">FarmerChat</h2>
+          <h2 class="mx-auto font-bold text-xl text-white">ServVIA</h2>
         </a>
         <div id="langauge_selection_box">
           <input type="email" id="emailInput" placeholder="Enter your email" />
@@ -233,17 +233,17 @@
           class="absolute inset-0 h-96 w-96 top-36 left-72 flex flex-col items-center justify-center text-center p-4 bg-opacity-90 transition-opacity duration-500"
         >
           <img
-            src="https://farmerchat.vercel.app/primary-logo.svg"
-            alt="Farmer Chat Logo"
-            class="mb-4 w-60"
+          src="https://via.placeholder.com/240x60/4CAF50/FFFFFF?text=ServVIA"
+          alt="ServVIA Healthcare Logo"
+          class="mb-4 w-60"
           />
           <!-- Adjust the path and size as needed -->
           <h1 class="text-2xl font-bold text-white mb-2">
-            Welcome to Farmer Chat
+            Welcome to ServVIA
           </h1>
           <p class="text-white">
-            We're here to help you with your agricultural queries. Please type
-            your message below to start chatting.
+            Your AI-powered healthcare assistant. Ask me about health symptoms, home remedies, 
+            medical guidance, or upload your vitals for analysis. Let's take care of your health together! 💊🏥
           </p>
         </div>
 
@@ -292,7 +292,7 @@
     <script>
       let counter = 0;
       let userMailId = localStorage.getItem("userEmail");
-      let baseUrl = "https://farmerchat.farmstack.co/opensource-be";
+      let baseUrl = "http://127.0.0.1:8000/api";
       function showAlertMessage(message) {
         alert(message);
       }
