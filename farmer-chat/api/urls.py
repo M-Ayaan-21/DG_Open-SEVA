@@ -1,13 +1,14 @@
-from django.contrib import admin
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
-from api.views import ChatAPIViewSet, LanguageViewSet
-
-router = DefaultRouter()
-router.register(r"chat", ChatAPIViewSet, basename="chat")
-router.register(r"language", LanguageViewSet, basename="language")
+from django.urls import path
+from api.servvia_endpoint import get_answer_for_text_query
+from api.language_endpoint import get_supported_languages
 
 urlpatterns = [
-    path("", include(router.urls)),
+    # ServVIA Healthcare endpoints - handle both single and double /api/ paths
+    path("chat/get_answer_for_text_query/", get_answer_for_text_query, name="servvia-healthcare"),
+    path("api/chat/get_answer_for_text_query/", get_answer_for_text_query, name="servvia-healthcare-double-api"),
+    
+    # Language endpoints - handle both single and double /api/ paths  
+    path("languages/", get_supported_languages, name="get-languages"),
+    path("language/languages/", get_supported_languages, name="get-languages-alt"),
+    path("api/language/languages/", get_supported_languages, name="get-languages-double-api"),
 ]
