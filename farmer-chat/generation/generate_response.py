@@ -4,11 +4,20 @@ import asyncio
 from django_core.config import Config
 from rag_service.openai_service import make_openai_request
 
+# Try to import Servvia prompts, fallback to Config if not available
+try:
+    from django_core.servvia_prompts import RESPONSE_GEN_PROMPT as SERVVIA_RESPONSE_GEN_PROMPT
+    DEFAULT_RESPONSE_PROMPT = SERVVIA_RESPONSE_GEN_PROMPT
+except ImportError:
+    DEFAULT_RESPONSE_PROMPT = Config.RESPONSE_GEN_PROMPT
 
-async def setup_prompt(user_name, context_chunks, rephrased_query, system_prompt=Config.RESPONSE_GEN_PROMPT):
+
+async def setup_prompt(user_name, context_chunks, rephrased_query, system_prompt=None):
     """
     Setup generation response prompt for a rephrased user query with retrieved chunks.
     """
+    if system_prompt is None:
+        system_prompt = DEFAULT_RESPONSE_PROMPT
     prompt_name_1 = user_name if user_name else "a person"
     prompt_name_2 = user_name if user_name else "the person"
     response_prompt = system_prompt.format(
@@ -62,9 +71,11 @@ async def generate_query_response(original_query, user_name, context_chunks, rep
 
     if generated_response:
         llm_response = generated_response.choices[0].message.content
-        generation_completion_tokens = generated_response.usage.completion_tokens
-        generation_prompt_tokens = generated_response.usage.prompt_tokens
-        generation_total_tokens = generated_response.usage.total_tokens
+        # Handle token usage defensively in case fields are missing
+        if hasattr(generated_response, 'usage') and generated_response.usage:
+            generation_completion_tokens = getattr(generated_response.usage, 'completion_tokens', 0)
+            generation_prompt_tokens = getattr(generated_response.usage, 'prompt_tokens', 0)
+            generation_total_tokens = getattr(generated_response.usage, 'total_tokens', 0)
 
     response_map.update(
         {
